@@ -1,0 +1,41 @@
+DỰ ÁN: WEB BÁN MŨ BẢO HIỂM – ĐỒ PHƯỢT QUẢNG TRỊ
+
+– Công nghệ:
+  Node.js + Express
+  EJS
+  SQLite (db/helmet.db)
+  TailwindCSS
+  Multer upload ảnh
+  Modal sản phẩm + carousel ảnh (prev/next + swipe mobile)
+
+– Chức năng đã làm:
+  + Trang chủ bán hàng
+  + Admin đăng nhập
+  + Thêm / sửa / xóa sản phẩm
+  + Upload nhiều ảnh cho 1 sản phẩm
+  + Chọn ảnh đại diện hiển thị index
+  + Click sản phẩm mở modal xem ảnh (carousel)
+  + Giỏ hàng frontend
+  + Gửi đơn qua email
+  + UX mobile: swipe ảnh
+
+– Thư mục chính:
+  server.js
+  views/index.ejs
+  views/admin/product-form.ejs
+  public/uploads/
+  db/helmet.db
+
+– Admin:
+  Username: admin
+  Password: 123456
+
+– Phong cách giao diện:
+  Dark theme
+  Màu chủ đạo: Đen – Cam
+  Tập trung mũ Royal chính hãng + dịch vụ sửa mũ
+
+– Việc đang làm dở:
+  + Tối ưu giao diện modal
+  + Có thể thêm trang chi tiết sản phẩm riêng
+  + Chuẩn bị cho thanh toán online sau
