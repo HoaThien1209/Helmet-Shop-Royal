@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Royal Helmet Quảng Trị"
+description = "Website bán mũ bảo hiểm Royal chính hãng với catalog sản phẩm, chọn size/màu, giỏ hàng, đặt hàng COD và khu vực quản trị sản phẩm, đơn hàng."
+version = "1.0.0"
+id = "artifacts/royal-helmet-quang-tri"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 25739
+
+[services.development]
+run = "pnpm --filter @workspace/royal-helmet-quang-tri run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/royal-helmet-quang-tri", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/royal-helmet-quang-tri/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "25739"
+BASE_PATH = "/"

@@ -3,13 +3,19 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Royal Helmet Quảng Trị storefront and admin API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: products
+    description: Product catalog
+  - name: orders
+    description: Customer checkout and admin order management
+  - name: admin
+    description: Admin authentication and management
 paths:
   /healthz:
     get:
@@ -24,7 +30,321 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /products:
+    get:
+      operationId: listProducts
+      tags: [products]
+      summary: List products
+      parameters:
+        - $ref: "#/components/parameters/Q"
+        - $ref: "#/components/parameters/Category"
+        - $ref: "#/components/parameters/Sort"
+        - $ref: "#/components/parameters/Featured"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: Product list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Product"
+  /products/{slug}:
+    get:
+      operationId: getProduct
+      tags: [products]
+      summary: Get a product by slug
+      parameters:
+        - $ref: "#/components/parameters/Slug"
+      responses:
+        "200":
+          description: Product detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /orders:
+    post:
+      operationId: createOrder
+      tags: [orders]
+      summary: Create a customer order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrderInput"
+      responses:
+        "201":
+          description: Order created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderConfirmation"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+  /auth/login:
+    post:
+      operationId: adminLogin
+      tags: [admin]
+      summary: Sign in as admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: Admin session created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminSession"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /auth/logout:
+    post:
+      operationId: adminLogout
+      tags: [admin]
+      summary: Sign out admin
+      responses:
+        "200":
+          description: Session cleared
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+  /auth/me:
+    get:
+      operationId: getAdminSession
+      tags: [admin]
+      summary: Get current admin session
+      responses:
+        "200":
+          description: Current session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminSession"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /admin/stats:
+    get:
+      operationId: getAdminStats
+      tags: [admin]
+      summary: Get admin dashboard summary
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminStats"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /admin/products:
+    get:
+      operationId: listAdminProducts
+      tags: [admin]
+      summary: List products for admin
+      responses:
+        "200":
+          description: Admin product list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Product"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      operationId: createProduct
+      tags: [admin]
+      summary: Create product
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductInput"
+      responses:
+        "201":
+          description: Product created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /admin/products/{id}:
+    patch:
+      operationId: updateProduct
+      tags: [admin]
+      summary: Update product
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductInput"
+      responses:
+        "200":
+          description: Product updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      operationId: deleteProduct
+      tags: [admin]
+      summary: Delete product
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Product deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /admin/orders:
+    get:
+      operationId: listOrders
+      tags: [orders, admin]
+      summary: List orders
+      parameters:
+        - $ref: "#/components/parameters/Status"
+      responses:
+        "200":
+          description: Order list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Order"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /admin/orders/{id}:
+    get:
+      operationId: getOrder
+      tags: [orders, admin]
+      summary: Get order details
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Order details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      operationId: updateOrderStatus
+      tags: [orders, admin]
+      summary: Update order status
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrderStatusInput"
+      responses:
+        "200":
+          description: Order updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
 components:
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: number
+        minimum: 1
+    Slug:
+      name: slug
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+    Q:
+      name: q
+      in: query
+      required: false
+      schema:
+        type: string
+    Category:
+      name: category
+      in: query
+      required: false
+      schema:
+        type: string
+    Sort:
+      name: sort
+      in: query
+      required: false
+      schema:
+        type: string
+        enum: [newest, price-asc, price-desc, featured]
+        default: newest
+    Featured:
+      name: featured
+      in: query
+      required: false
+      schema:
+        type: boolean
+    Limit:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: number
+        minimum: 1
+        maximum: 100
+        default: 50
+    Status:
+      name: status
+      in: query
+      required: false
+      schema:
+        type: string
+        enum: [new, confirmed, preparing, shipped, delivered, cancelled, failed_delivery]
   schemas:
     HealthStatus:
       type: object
@@ -33,4 +353,182 @@ components:
           type: string
       required:
         - status
+    Product:
+      type: object
+      required: [id, name, slug, price, category, thumbnail, images, description, sizes, colors, stock, featured, bestseller, isNew, createdAt]
+      properties:
+        id: { type: number }
+        name: { type: string }
+        slug: { type: string }
+        sku: { type: ["string", "null"] }
+        category: { type: string }
+        price: { type: number, minimum: 0 }
+        compareAtPrice: { type: ["number", "null"], minimum: 0 }
+        thumbnail: { type: string }
+        images:
+          type: array
+          items: { type: string }
+        description: { type: string }
+        specs:
+          type: object
+          additionalProperties: { type: string }
+        sizes:
+          type: array
+          items: { type: string }
+        colors:
+          type: array
+          items: { type: string }
+        stock: { type: number, minimum: 0 }
+        warranty: { type: string }
+        featured: { type: boolean }
+        bestseller: { type: boolean }
+        isNew: { type: boolean }
+        createdAt: { type: string, format: date-time }
+    ProductInput:
+      type: object
+      required: [name, category, price, thumbnail, description]
+      properties:
+        name: { type: string, minLength: 2 }
+        sku: { type: ["string", "null"] }
+        category: { type: string, minLength: 1 }
+        price: { type: number, minimum: 0 }
+        compareAtPrice: { type: ["number", "null"], minimum: 0 }
+        thumbnail: { type: string, minLength: 1 }
+        images:
+          type: array
+          items: { type: string }
+        description: { type: string }
+        specs:
+          type: object
+          additionalProperties: { type: string }
+        sizes:
+          type: array
+          items: { type: string }
+        colors:
+          type: array
+          items: { type: string }
+        stock: { type: number, minimum: 0 }
+        warranty: { type: string }
+        featured: { type: boolean }
+        bestseller: { type: boolean }
+        isNew: { type: boolean }
+    OrderLineInput:
+      type: object
+      required: [productId, quantity]
+      properties:
+        productId: { type: number, minimum: 1 }
+        quantity: { type: number, minimum: 1, maximum: 50 }
+        size: { type: ["string", "null"] }
+        color: { type: ["string", "null"] }
+    OrderInput:
+      type: object
+      required: [customerName, phone, address, items]
+      properties:
+        customerName: { type: string, minLength: 2 }
+        phone: { type: string, minLength: 8 }
+        address: { type: string, minLength: 5 }
+        note: { type: string }
+        paymentMethod:
+          type: string
+          enum: [cod, bank_transfer]
+          default: cod
+        items:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/OrderLineInput"
+    OrderItem:
+      type: object
+      required: [productId, productName, price, quantity, size, color]
+      properties:
+        productId: { type: number }
+        productName: { type: string }
+        price: { type: number }
+        quantity: { type: number }
+        size: { type: ["string", "null"] }
+        color: { type: ["string", "null"] }
+    Order:
+      type: object
+      required: [id, customerName, phone, address, total, status, paymentMethod, items, createdAt]
+      properties:
+        id: { type: number }
+        customerName: { type: string }
+        phone: { type: string }
+        address: { type: string }
+        note: { type: string }
+        total: { type: number }
+        status:
+          type: string
+          enum: [new, confirmed, preparing, shipped, delivered, cancelled, failed_delivery]
+        paymentMethod:
+          type: string
+          enum: [cod, bank_transfer]
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrderItem"
+        createdAt: { type: string, format: date-time }
+    OrderConfirmation:
+      type: object
+      required: [orderId, total, status]
+      properties:
+        orderId: { type: number }
+        total: { type: number }
+        status: { type: string }
+    OrderStatusInput:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [new, confirmed, preparing, shipped, delivered, cancelled, failed_delivery]
+    LoginInput:
+      type: object
+      required: [username, password]
+      properties:
+        username: { type: string, minLength: 1 }
+        password: { type: string, minLength: 1 }
+    AdminSession:
+      type: object
+      required: [authenticated, username]
+      properties:
+        authenticated: { type: boolean }
+        username: { type: string }
+    AdminStats:
+      type: object
+      required: [productCount, orderCount, newOrderCount, revenue]
+      properties:
+        productCount: { type: number }
+        orderCount: { type: number }
+        newOrderCount: { type: number }
+        revenue: { type: number }
+    SuccessResponse:
+      type: object
+      required: [success]
+      properties:
+        success: { type: boolean }
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error: { type: string }
+  responses:
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
 
