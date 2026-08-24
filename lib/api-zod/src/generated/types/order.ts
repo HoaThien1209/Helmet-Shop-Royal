@@ -13,6 +13,7 @@ export interface Order {
   id: number;
   customerName: string;
   phone: string;
+  email: string;
   address: string;
   note?: string;
   total: number;

@@ -1,8 +1,12 @@
-import { randomUUID } from "node:crypto";
+import { randomUUID, randomBytes, createHash } from "node:crypto";
 import { Router, type IRouter, type Request, type Response } from "express";
 import { and, asc, desc, eq, ilike, or, sql } from "drizzle-orm";
+import bcrypt from "bcryptjs";
+import { upload } from "../lib/uploads";
+import { sendOrderConfirmationEmail, sendPasswordResetEmail } from "../lib/mailer";
 import {
   db,
+  adminTable,
   orderItemsTable,
   ordersTable,
   productsTable,
@@ -10,10 +14,18 @@ import {
 } from "@workspace/db";
 import {
   AdminLoginBody,
+  ChangeAdminPasswordBody,
+  ChangeAdminPasswordResponse,
+  ForgotAdminPasswordBody,
+  ForgotAdminPasswordResponse,
+  ResetAdminPasswordBody,
+  ResetAdminPasswordResponse,
   CreateOrderBody,
   CreateProductBody,
   CreateProductResponse,
   CreateOrderResponse,
+  DeleteOrderParams,
+  DeleteOrderResponse,
   DeleteProductParams,
   DeleteProductResponse,
   GetAdminSessionResponse,
@@ -40,9 +52,31 @@ import {
 const router: IRouter = Router();
 const sessions = new Set<string>();
 const cookieName = "rh_admin_session";
-const adminUsername = process.env.ADMIN_USERNAME ?? "admin";
-const adminPassword = process.env.ADMIN_PASSWORD ?? "royal-helmet-2026";
+const seedAdminUsername = process.env.ADMIN_USERNAME ?? "admin";
+const seedAdminPassword = process.env.ADMIN_PASSWORD ?? "123456";
+const seedAdminEmail = process.env.GMAIL_USER ?? "";
 let seedChecked = false;
+let adminSeeded = false;
+
+const ensureAdminSeeded = async () => {
+  if (adminSeeded) return;
+  const [existing] = await db.select().from(adminTable).limit(1);
+  if (!existing) {
+    const passwordHash = await bcrypt.hash(seedAdminPassword, 10);
+    await db.insert(adminTable).values({
+      username: seedAdminUsername,
+      passwordHash,
+      email: seedAdminEmail,
+    });
+  }
+  adminSeeded = true;
+};
+
+const getAdmin = async () => {
+  await ensureAdminSeeded();
+  const [admin] = await db.select().from(adminTable).limit(1);
+  return admin ?? null;
+};
 
 const readSession = (req: Request) => {
   const raw = req.headers.cookie?.match(
@@ -74,7 +108,16 @@ const mapProduct = (product: typeof productsTable.$inferSelect) => ({
   specs: product.specs ?? {},
   sizes: product.sizes ?? [],
   colors: product.colors ?? [],
+  colorImages: Object.fromEntries(
+    Object.entries(product.colorImages ?? {}).map(([color, value]) => [
+      color,
+      Array.isArray(value) ? value : [value as unknown as string],
+    ]),
+  ),
+  variants: product.variants ?? {},
 });
+
+const variantKey = (size: string, color: string) => `${size} ${color}`;
 
 const ensureSeedProducts = async () => {
   if (seedChecked) return;
@@ -303,8 +346,12 @@ router.post("/orders", async (req, res): Promise<void> => {
       res.status(400).json({ error: `Product ${item.productId} not found` });
       return;
     }
-    if (product.stock < item.quantity) {
-      res.status(400).json({ error: `${product.name} không đủ tồn kho` });
+    const key = item.size && item.color ? variantKey(item.size, item.color) : null;
+    const variantStock = key ? product.variants?.[key] : undefined;
+    const availableStock = variantStock !== undefined ? variantStock : product.stock;
+    if (availableStock < item.quantity) {
+      const variantLabel = item.size && item.color ? ` (size ${item.size}, màu ${item.color})` : "";
+      res.status(400).json({ error: `${product.name}${variantLabel} không đủ tồn kho` });
       return;
     }
     total += product.price * item.quantity;
@@ -323,6 +370,7 @@ router.post("/orders", async (req, res): Promise<void> => {
       .values({
         customerName: parsed.data.customerName,
         phone: parsed.data.phone,
+        email: parsed.data.email ?? "",
         address: parsed.data.address,
         note: parsed.data.note ?? "",
         paymentMethod: parsed.data.paymentMethod ?? "cod",
@@ -333,15 +381,39 @@ router.post("/orders", async (req, res): Promise<void> => {
     await tx.insert(orderItemsTable).values(
       lineItems.map((item) => ({ ...item, orderId: order.id })),
     );
+    const stockUpdates = new Map<number, { stock: number; variants: Record<string, number> }>();
     for (const item of parsed.data.items) {
       const product = productById.get(item.productId)!;
+      if (!stockUpdates.has(product.id)) {
+        stockUpdates.set(product.id, { stock: product.stock, variants: { ...(product.variants ?? {}) } });
+      }
+      const state = stockUpdates.get(product.id)!;
+      const key = item.size && item.color ? variantKey(item.size, item.color) : null;
+      if (key && state.variants[key] !== undefined) {
+        state.variants[key] -= item.quantity;
+      }
+      state.stock -= item.quantity;
+    }
+    for (const [productId, state] of stockUpdates) {
       await tx
         .update(productsTable)
-        .set({ stock: product.stock - item.quantity })
-        .where(eq(productsTable.id, item.productId));
+        .set({ stock: state.stock, variants: state.variants })
+        .where(eq(productsTable.id, productId));
     }
     return order;
   });
+  if (result.email) {
+    void sendOrderConfirmationEmail({
+      orderId: result.id,
+      customerName: result.customerName,
+      email: result.email,
+      phone: result.phone,
+      address: result.address,
+      total: result.total,
+      paymentMethod: result.paymentMethod,
+      items: lineItems,
+    });
+  }
   res.status(201).json(
     CreateOrderResponse.parse({
       orderId: result.id,
@@ -351,16 +423,15 @@ router.post("/orders", async (req, res): Promise<void> => {
   );
 });
 
-router.post("/admin/login", async (req, res): Promise<void> => {
+router.post("/auth/login", async (req, res): Promise<void> => {
   const parsed = AdminLoginBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
-  if (
-    parsed.data.username !== adminUsername ||
-    parsed.data.password !== adminPassword
-  ) {
+  const admin = await getAdmin();
+  const passwordOk = admin ? await bcrypt.compare(parsed.data.password, admin.passwordHash) : false;
+  if (!admin || parsed.data.username !== admin.username || !passwordOk) {
     res.status(401).json({ error: "Sai tên đăng nhập hoặc mật khẩu" });
     return;
   }
@@ -370,10 +441,10 @@ router.post("/admin/login", async (req, res): Promise<void> => {
     "Set-Cookie",
     `${cookieName}=${session}; HttpOnly; Path=/; SameSite=Lax; Max-Age=86400`,
   );
-  res.json(AdminLoginResponse.parse({ authenticated: true, username: adminUsername }));
+  res.json(AdminLoginResponse.parse({ authenticated: true, username: admin.username }));
 });
 
-router.post("/admin/logout", async (_req, res): Promise<void> => {
+router.post("/auth/logout", async (_req, res): Promise<void> => {
   res.setHeader(
     "Set-Cookie",
     `${cookieName}=; HttpOnly; Path=/; SameSite=Lax; Max-Age=0`,
@@ -381,14 +452,82 @@ router.post("/admin/logout", async (_req, res): Promise<void> => {
   res.json(AdminLogoutResponse.parse({ success: true }));
 });
 
-router.get("/admin/session", async (req, res): Promise<void> => {
+router.get("/auth/me", async (req, res): Promise<void> => {
   const authenticated = Boolean(readSession(req));
+  const admin = authenticated ? await getAdmin() : null;
   res.json(
     GetAdminSessionResponse.parse({
       authenticated,
-      username: authenticated ? adminUsername : "",
+      username: admin?.username ?? "",
     }),
   );
+});
+
+router.post("/auth/change-password", async (req, res): Promise<void> => {
+  if (!requireAdmin(req, res)) return;
+  const parsed = ChangeAdminPasswordBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+  const admin = await getAdmin();
+  if (!admin) {
+    res.status(400).json({ error: "Không tìm thấy tài khoản quản trị" });
+    return;
+  }
+  const currentOk = await bcrypt.compare(parsed.data.currentPassword, admin.passwordHash);
+  if (!currentOk) {
+    res.status(400).json({ error: "Mật khẩu hiện tại không đúng" });
+    return;
+  }
+  const passwordHash = await bcrypt.hash(parsed.data.newPassword, 10);
+  await db.update(adminTable).set({ passwordHash, updatedAt: new Date() }).where(eq(adminTable.id, admin.id));
+  res.json(ChangeAdminPasswordResponse.parse({ success: true }));
+});
+
+router.post("/auth/forgot-password", async (req, res): Promise<void> => {
+  const parsed = ForgotAdminPasswordBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+  const admin = await getAdmin();
+  if (admin?.email) {
+    const rawToken = randomBytes(32).toString("hex");
+    const resetTokenHash = createHash("sha256").update(rawToken).digest("hex");
+    const resetTokenExpiresAt = new Date(Date.now() + 30 * 60 * 1000);
+    await db
+      .update(adminTable)
+      .set({ resetTokenHash, resetTokenExpiresAt, updatedAt: new Date() })
+      .where(eq(adminTable.id, admin.id));
+    const resetUrl = `${parsed.data.origin}/admin/reset-password?token=${rawToken}`;
+    void sendPasswordResetEmail(admin.email, resetUrl);
+  }
+  res.json(ForgotAdminPasswordResponse.parse({ success: true }));
+});
+
+router.post("/auth/reset-password", async (req, res): Promise<void> => {
+  const parsed = ResetAdminPasswordBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+  const admin = await getAdmin();
+  const tokenHash = createHash("sha256").update(parsed.data.token).digest("hex");
+  const tokenValid =
+    admin?.resetTokenHash === tokenHash &&
+    admin.resetTokenExpiresAt &&
+    admin.resetTokenExpiresAt.getTime() > Date.now();
+  if (!admin || !tokenValid) {
+    res.status(400).json({ error: "Liên kết đặt lại mật khẩu không hợp lệ hoặc đã hết hạn" });
+    return;
+  }
+  const passwordHash = await bcrypt.hash(parsed.data.newPassword, 10);
+  await db
+    .update(adminTable)
+    .set({ passwordHash, resetTokenHash: null, resetTokenExpiresAt: null, updatedAt: new Date() })
+    .where(eq(adminTable.id, admin.id));
+  res.json(ResetAdminPasswordResponse.parse({ success: true }));
 });
 
 router.get("/admin/stats", async (req, res): Promise<void> => {
@@ -424,6 +563,19 @@ router.get("/admin/products", async (req, res): Promise<void> => {
   res.json(ListAdminProductsResponse.parse(rows.map(mapProduct)));
 });
 
+router.post("/admin/upload", (req, res): void => {
+  if (!requireAdmin(req, res)) return;
+  upload.array("images", 12)(req, res, (err) => {
+    if (err) {
+      res.status(400).json({ error: err instanceof Error ? err.message : "Tải ảnh thất bại" });
+      return;
+    }
+    const files = (req.files as Express.Multer.File[] | undefined) ?? [];
+    const urls = files.map((file) => `/uploads/${file.filename}`);
+    res.status(201).json({ urls });
+  });
+});
+
 router.post("/admin/products", async (req, res): Promise<void> => {
   if (!requireAdmin(req, res)) return;
   const parsed = CreateProductBody.safeParse(req.body);
@@ -442,6 +594,8 @@ router.post("/admin/products", async (req, res): Promise<void> => {
       specs: parsed.data.specs ?? {},
       sizes: parsed.data.sizes ?? [],
       colors: parsed.data.colors ?? [],
+      colorImages: parsed.data.colorImages ?? {},
+      variants: parsed.data.variants ?? {},
       stock: parsed.data.stock ?? 0,
       warranty: parsed.data.warranty ?? "Bảo hành chính hãng 12 tháng",
       featured: parsed.data.featured ?? false,
@@ -468,6 +622,8 @@ router.patch("/admin/products/:id", async (req, res): Promise<void> => {
       specs: parsed.data.specs ?? {},
       sizes: parsed.data.sizes ?? [],
       colors: parsed.data.colors ?? [],
+      colorImages: parsed.data.colorImages ?? {},
+      variants: parsed.data.variants ?? {},
       updatedAt: new Date(),
     })
     .where(eq(productsTable.id, params.data.id))
@@ -528,7 +684,7 @@ router.get("/admin/orders/:id", async (req, res): Promise<void> => {
   res.json(GetOrderResponse.parse(order));
 });
 
-router.patch("/admin/orders/:id/status", async (req, res): Promise<void> => {
+router.patch("/admin/orders/:id", async (req, res): Promise<void> => {
   if (!requireAdmin(req, res)) return;
   const params = UpdateOrderStatusParams.safeParse(req.params);
   const parsed = UpdateOrderStatusBody.safeParse(req.body);
@@ -547,6 +703,24 @@ router.patch("/admin/orders/:id/status", async (req, res): Promise<void> => {
   }
   const order = await getOrder(updated.id);
   res.json(UpdateOrderStatusResponse.parse(order));
+});
+
+router.delete("/admin/orders/:id", async (req, res): Promise<void> => {
+  if (!requireAdmin(req, res)) return;
+  const params = DeleteOrderParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+  const [order] = await db
+    .delete(ordersTable)
+    .where(eq(ordersTable.id, params.data.id))
+    .returning();
+  if (!order) {
+    res.status(404).json({ error: "Order not found" });
+    return;
+  }
+  res.json(DeleteOrderResponse.parse({ success: true }));
 });
 
 export default router;

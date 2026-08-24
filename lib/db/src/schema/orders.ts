@@ -10,6 +10,7 @@ export const ordersTable = pgTable("rh_orders", {
   id: serial("id").primaryKey(),
   customerName: text("customer_name").notNull(),
   phone: text("phone").notNull(),
+  email: text("email").notNull().default(""),
   address: text("address").notNull(),
   note: text("note").notNull().default(""),
   total: integer("total").notNull().default(0),

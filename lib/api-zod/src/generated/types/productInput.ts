@@ -5,7 +5,9 @@
  * Royal Helmet Quảng Trị storefront and admin API
  * OpenAPI spec version: 0.1.0
  */
+import type { ProductInputColorImages } from './productInputColorImages';
 import type { ProductInputSpecs } from './productInputSpecs';
+import type { ProductInputVariants } from './productInputVariants';
 
 export interface ProductInput {
   /** @minLength 2 */
@@ -28,6 +30,8 @@ export interface ProductInput {
   specs?: ProductInputSpecs;
   sizes?: string[];
   colors?: string[];
+  colorImages?: ProductInputColorImages;
+  variants?: ProductInputVariants;
   /** @minimum 0 */
   stock?: number;
   warranty?: string;

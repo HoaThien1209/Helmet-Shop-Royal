@@ -11,6 +11,10 @@ export interface HealthStatus {
 
 export type ProductSpecs = {[key: string]: string};
 
+export type ProductColorImages = {[key: string]: string[]};
+
+export type ProductVariants = {[key: string]: number};
+
 export interface Product {
   id: number;
   name: string;
@@ -31,6 +35,8 @@ export interface Product {
   specs?: ProductSpecs;
   sizes: string[];
   colors: string[];
+  colorImages?: ProductColorImages;
+  variants?: ProductVariants;
   /** @minimum 0 */
   stock: number;
   warranty?: string;
@@ -41,6 +47,10 @@ export interface Product {
 }
 
 export type ProductInputSpecs = {[key: string]: string};
+
+export type ProductInputColorImages = {[key: string]: string[]};
+
+export type ProductInputVariants = {[key: string]: number};
 
 export interface ProductInput {
   /** @minLength 2 */
@@ -63,6 +73,8 @@ export interface ProductInput {
   specs?: ProductInputSpecs;
   sizes?: string[];
   colors?: string[];
+  colorImages?: ProductInputColorImages;
+  variants?: ProductInputVariants;
   /** @minimum 0 */
   stock?: number;
   warranty?: string;
@@ -98,6 +110,7 @@ export interface OrderInput {
   customerName: string;
   /** @minLength 8 */
   phone: string;
+  email?: string;
   /** @minLength 5 */
   address: string;
   note?: string;
@@ -142,6 +155,7 @@ export interface Order {
   id: number;
   customerName: string;
   phone: string;
+  email: string;
   address: string;
   note?: string;
   total: number;
@@ -179,6 +193,25 @@ export interface LoginInput {
   username: string;
   /** @minLength 1 */
   password: string;
+}
+
+export interface ChangePasswordInput {
+  /** @minLength 1 */
+  currentPassword: string;
+  /** @minLength 6 */
+  newPassword: string;
+}
+
+export interface ForgotPasswordInput {
+  /** @minLength 1 */
+  origin: string;
+}
+
+export interface ResetPasswordInput {
+  /** @minLength 1 */
+  token: string;
+  /** @minLength 6 */
+  newPassword: string;
 }
 
 export interface AdminSession {

@@ -13,6 +13,7 @@ export interface OrderInput {
   customerName: string;
   /** @minLength 8 */
   phone: string;
+  email?: string;
   /** @minLength 5 */
   address: string;
   note?: string;

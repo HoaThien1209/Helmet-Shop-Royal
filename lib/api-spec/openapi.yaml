@@ -132,6 +132,66 @@ paths:
                 $ref: "#/components/schemas/AdminSession"
         "401":
           $ref: "#/components/responses/Unauthorized"
+  /auth/change-password:
+    post:
+      operationId: changeAdminPassword
+      tags: [admin]
+      summary: Change the admin password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangePasswordInput"
+      responses:
+        "200":
+          description: Password changed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /auth/forgot-password:
+    post:
+      operationId: forgotAdminPassword
+      tags: [admin]
+      summary: Request an admin password reset email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ForgotPasswordInput"
+      responses:
+        "200":
+          description: Reset email sent if an admin account exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+  /auth/reset-password:
+    post:
+      operationId: resetAdminPassword
+      tags: [admin]
+      summary: Reset the admin password using an email token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResetPasswordInput"
+      responses:
+        "200":
+          description: Password reset
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
   /admin/stats:
     get:
       operationId: getAdminStats
@@ -287,6 +347,23 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
+    delete:
+      operationId: deleteOrder
+      tags: [orders, admin]
+      summary: Delete order
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Order deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
 components:
   parameters:
     Id:
@@ -378,6 +455,14 @@ components:
         colors:
           type: array
           items: { type: string }
+        colorImages:
+          type: object
+          additionalProperties:
+            type: array
+            items: { type: string }
+        variants:
+          type: object
+          additionalProperties: { type: number, minimum: 0 }
         stock: { type: number, minimum: 0 }
         warranty: { type: string }
         featured: { type: boolean }
@@ -407,6 +492,14 @@ components:
         colors:
           type: array
           items: { type: string }
+        colorImages:
+          type: object
+          additionalProperties:
+            type: array
+            items: { type: string }
+        variants:
+          type: object
+          additionalProperties: { type: number, minimum: 0 }
         stock: { type: number, minimum: 0 }
         warranty: { type: string }
         featured: { type: boolean }
@@ -426,6 +519,7 @@ components:
       properties:
         customerName: { type: string, minLength: 2 }
         phone: { type: string, minLength: 8 }
+        email: { type: string }
         address: { type: string, minLength: 5 }
         note: { type: string }
         paymentMethod:
@@ -449,11 +543,12 @@ components:
         color: { type: ["string", "null"] }
     Order:
       type: object
-      required: [id, customerName, phone, address, total, status, paymentMethod, items, createdAt]
+      required: [id, customerName, phone, email, address, total, status, paymentMethod, items, createdAt]
       properties:
         id: { type: number }
         customerName: { type: string }
         phone: { type: string }
+        email: { type: string }
         address: { type: string }
         note: { type: string }
         total: { type: number }
@@ -488,6 +583,23 @@ components:
       properties:
         username: { type: string, minLength: 1 }
         password: { type: string, minLength: 1 }
+    ChangePasswordInput:
+      type: object
+      required: [currentPassword, newPassword]
+      properties:
+        currentPassword: { type: string, minLength: 1 }
+        newPassword: { type: string, minLength: 6 }
+    ForgotPasswordInput:
+      type: object
+      required: [origin]
+      properties:
+        origin: { type: string, minLength: 1 }
+    ResetPasswordInput:
+      type: object
+      required: [token, newPassword]
+      properties:
+        token: { type: string, minLength: 1 }
+        newPassword: { type: string, minLength: 6 }
     AdminSession:
       type: object
       required: [authenticated, username]

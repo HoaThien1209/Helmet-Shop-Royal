@@ -38,6 +38,8 @@ export const listProductsResponsePriceMin = 0;
 
 export const listProductsResponseCompareAtPriceMin = 0;
 
+export const listProductsResponseVariantsMinOne = 0;
+
 export const listProductsResponseStockMin = 0;
 
 
@@ -56,6 +58,8 @@ export const ListProductsResponseItem = zod.object({
   "specs": zod.record(zod.string(), zod.string()).optional(),
   "sizes": zod.array(zod.string()),
   "colors": zod.array(zod.string()),
+  "colorImages": zod.record(zod.string(), zod.array(zod.string())).optional(),
+  "variants": zod.record(zod.string(), zod.number().min(listProductsResponseVariantsMinOne)).optional(),
   "stock": zod.number().min(listProductsResponseStockMin),
   "warranty": zod.string().optional(),
   "featured": zod.boolean(),
@@ -80,6 +84,8 @@ export const getProductResponsePriceMin = 0;
 
 export const getProductResponseCompareAtPriceMin = 0;
 
+export const getProductResponseVariantsMinOne = 0;
+
 export const getProductResponseStockMin = 0;
 
 
@@ -98,6 +104,8 @@ export const GetProductResponse = zod.object({
   "specs": zod.record(zod.string(), zod.string()).optional(),
   "sizes": zod.array(zod.string()),
   "colors": zod.array(zod.string()),
+  "colorImages": zod.record(zod.string(), zod.array(zod.string())).optional(),
+  "variants": zod.record(zod.string(), zod.number().min(getProductResponseVariantsMinOne)).optional(),
   "stock": zod.number().min(getProductResponseStockMin),
   "warranty": zod.string().optional(),
   "featured": zod.boolean(),
@@ -125,6 +133,7 @@ export const createOrderBodyItemsItemQuantityMax = 50;
 export const CreateOrderBody = zod.object({
   "customerName": zod.string().min(createOrderBodyCustomerNameMin),
   "phone": zod.string().min(createOrderBodyPhoneMin),
+  "email": zod.string().optional(),
   "address": zod.string().min(createOrderBodyAddressMin),
   "note": zod.string().optional(),
   "paymentMethod": zod.enum(['cod', 'bank_transfer']).default(createOrderBodyPaymentMethodDefault),
@@ -179,6 +188,57 @@ export const GetAdminSessionResponse = zod.object({
 
 
 /**
+ * @summary Change the admin password
+ */
+
+export const changeAdminPasswordBodyNewPasswordMin = 6;
+
+
+
+export const ChangeAdminPasswordBody = zod.object({
+  "currentPassword": zod.string().min(1),
+  "newPassword": zod.string().min(changeAdminPasswordBodyNewPasswordMin)
+})
+
+export const ChangeAdminPasswordResponse = zod.object({
+  "success": zod.boolean()
+})
+
+
+/**
+ * @summary Request an admin password reset email
+ */
+
+
+
+export const ForgotAdminPasswordBody = zod.object({
+  "origin": zod.string().min(1)
+})
+
+export const ForgotAdminPasswordResponse = zod.object({
+  "success": zod.boolean()
+})
+
+
+/**
+ * @summary Reset the admin password using an email token
+ */
+
+export const resetAdminPasswordBodyNewPasswordMin = 6;
+
+
+
+export const ResetAdminPasswordBody = zod.object({
+  "token": zod.string().min(1),
+  "newPassword": zod.string().min(resetAdminPasswordBodyNewPasswordMin)
+})
+
+export const ResetAdminPasswordResponse = zod.object({
+  "success": zod.boolean()
+})
+
+
+/**
  * @summary Get admin dashboard summary
  */
 export const GetAdminStatsResponse = zod.object({
@@ -195,6 +255,8 @@ export const GetAdminStatsResponse = zod.object({
 export const listAdminProductsResponsePriceMin = 0;
 
 export const listAdminProductsResponseCompareAtPriceMin = 0;
+
+export const listAdminProductsResponseVariantsMinOne = 0;
 
 export const listAdminProductsResponseStockMin = 0;
 
@@ -214,6 +276,8 @@ export const ListAdminProductsResponseItem = zod.object({
   "specs": zod.record(zod.string(), zod.string()).optional(),
   "sizes": zod.array(zod.string()),
   "colors": zod.array(zod.string()),
+  "colorImages": zod.record(zod.string(), zod.array(zod.string())).optional(),
+  "variants": zod.record(zod.string(), zod.number().min(listAdminProductsResponseVariantsMinOne)).optional(),
   "stock": zod.number().min(listAdminProductsResponseStockMin),
   "warranty": zod.string().optional(),
   "featured": zod.boolean(),
@@ -235,6 +299,8 @@ export const createProductBodyPriceMin = 0;
 export const createProductBodyCompareAtPriceMin = 0;
 
 
+export const createProductBodyVariantsMinOne = 0;
+
 export const createProductBodyStockMin = 0;
 
 
@@ -251,6 +317,8 @@ export const CreateProductBody = zod.object({
   "specs": zod.record(zod.string(), zod.string()).optional(),
   "sizes": zod.array(zod.string()).optional(),
   "colors": zod.array(zod.string()).optional(),
+  "colorImages": zod.record(zod.string(), zod.array(zod.string())).optional(),
+  "variants": zod.record(zod.string(), zod.number().min(createProductBodyVariantsMinOne)).optional(),
   "stock": zod.number().min(createProductBodyStockMin).optional(),
   "warranty": zod.string().optional(),
   "featured": zod.boolean().optional(),
@@ -261,6 +329,8 @@ export const CreateProductBody = zod.object({
 export const createProductResponsePriceMin = 0;
 
 export const createProductResponseCompareAtPriceMin = 0;
+
+export const createProductResponseVariantsMinOne = 0;
 
 export const createProductResponseStockMin = 0;
 
@@ -280,6 +350,8 @@ export const CreateProductResponse = zod.object({
   "specs": zod.record(zod.string(), zod.string()).optional(),
   "sizes": zod.array(zod.string()),
   "colors": zod.array(zod.string()),
+  "colorImages": zod.record(zod.string(), zod.array(zod.string())).optional(),
+  "variants": zod.record(zod.string(), zod.number().min(createProductResponseVariantsMinOne)).optional(),
   "stock": zod.number().min(createProductResponseStockMin),
   "warranty": zod.string().optional(),
   "featured": zod.boolean(),
@@ -307,6 +379,8 @@ export const updateProductBodyPriceMin = 0;
 export const updateProductBodyCompareAtPriceMin = 0;
 
 
+export const updateProductBodyVariantsMinOne = 0;
+
 export const updateProductBodyStockMin = 0;
 
 
@@ -323,6 +397,8 @@ export const UpdateProductBody = zod.object({
   "specs": zod.record(zod.string(), zod.string()).optional(),
   "sizes": zod.array(zod.string()).optional(),
   "colors": zod.array(zod.string()).optional(),
+  "colorImages": zod.record(zod.string(), zod.array(zod.string())).optional(),
+  "variants": zod.record(zod.string(), zod.number().min(updateProductBodyVariantsMinOne)).optional(),
   "stock": zod.number().min(updateProductBodyStockMin).optional(),
   "warranty": zod.string().optional(),
   "featured": zod.boolean().optional(),
@@ -333,6 +409,8 @@ export const UpdateProductBody = zod.object({
 export const updateProductResponsePriceMin = 0;
 
 export const updateProductResponseCompareAtPriceMin = 0;
+
+export const updateProductResponseVariantsMinOne = 0;
 
 export const updateProductResponseStockMin = 0;
 
@@ -352,6 +430,8 @@ export const UpdateProductResponse = zod.object({
   "specs": zod.record(zod.string(), zod.string()).optional(),
   "sizes": zod.array(zod.string()),
   "colors": zod.array(zod.string()),
+  "colorImages": zod.record(zod.string(), zod.array(zod.string())).optional(),
+  "variants": zod.record(zod.string(), zod.number().min(updateProductResponseVariantsMinOne)).optional(),
   "stock": zod.number().min(updateProductResponseStockMin),
   "warranty": zod.string().optional(),
   "featured": zod.boolean(),
@@ -387,6 +467,7 @@ export const ListOrdersResponseItem = zod.object({
   "id": zod.number(),
   "customerName": zod.string(),
   "phone": zod.string(),
+  "email": zod.string(),
   "address": zod.string(),
   "note": zod.string().optional(),
   "total": zod.number(),
@@ -419,6 +500,7 @@ export const GetOrderResponse = zod.object({
   "id": zod.number(),
   "customerName": zod.string(),
   "phone": zod.string(),
+  "email": zod.string(),
   "address": zod.string(),
   "note": zod.string().optional(),
   "total": zod.number(),
@@ -454,6 +536,7 @@ export const UpdateOrderStatusResponse = zod.object({
   "id": zod.number(),
   "customerName": zod.string(),
   "phone": zod.string(),
+  "email": zod.string(),
   "address": zod.string(),
   "note": zod.string().optional(),
   "total": zod.number(),
@@ -468,6 +551,21 @@ export const UpdateOrderStatusResponse = zod.object({
   "color": zod.string().nullable()
 })),
   "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Delete order
+ */
+
+
+
+export const DeleteOrderParams = zod.object({
+  "id": zod.coerce.number().min(1)
+})
+
+export const DeleteOrderResponse = zod.object({
+  "success": zod.boolean()
 })
 
 

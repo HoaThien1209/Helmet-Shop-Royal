@@ -22,6 +22,8 @@ export const productsTable = pgTable("rh_products", {
   specs: jsonb("specs").$type<Record<string, string>>().notNull().default({}),
   sizes: jsonb("sizes").$type<string[]>().notNull().default([]),
   colors: jsonb("colors").$type<string[]>().notNull().default([]),
+  colorImages: jsonb("color_images").$type<Record<string, string[]>>().notNull().default({}),
+  variants: jsonb("variants").$type<Record<string, number>>().notNull().default({}),
   stock: integer("stock").notNull().default(0),
   warranty: text("warranty").notNull().default("Bảo hành chính hãng"),
   featured: boolean("featured").notNull().default(false),
