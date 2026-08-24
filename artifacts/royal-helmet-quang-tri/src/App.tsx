@@ -159,7 +159,7 @@ function Storefront({ children }: { children: React.ReactNode }) {
           <button className="icon-button mobile-menu" onClick={() => setMenu(!menu)} aria-label="Mở menu"><Menu size={20} /></button>
           <Link href="/" className="brand"><BrandMark /><span><b>ROYAL</b><small>HELMET QUẢNG TRỊ</small></span></Link>
           <nav className={menu ? "nav open" : "nav"}>
-            <Link href="/products">Sản phẩm</Link><Link href="/products?category=phu-kien">Phụ kiện</Link><Link href="/gioi-thieu">Giới thiệu</Link><Link href="/gioi-thieu#dich-vu">Dịch vụ</Link><Link href="/policies">Chính sách</Link>
+            <Link href="/products">Sản phẩm</Link><Link href="/gioi-thieu">Giới thiệu</Link><Link href="/gioi-thieu#dich-vu">Dịch vụ</Link><Link href="/policies">Chính sách</Link>
           </nav>
           <div className="header-actions">
             <Link href="/products" className="icon-button" aria-label="Tìm kiếm"><Search size={20} strokeWidth={2.5} /></Link>
