@@ -473,6 +473,7 @@ export const ListOrdersResponseItem = zod.object({
   "total": zod.number(),
   "status": zod.enum(['new', 'confirmed', 'preparing', 'shipped', 'delivered', 'cancelled', 'failed_delivery']),
   "paymentMethod": zod.enum(['cod', 'bank_transfer']),
+  "paymentStatus": zod.enum(['unpaid', 'paid']),
   "items": zod.array(zod.object({
   "productId": zod.number(),
   "productName": zod.string(),
@@ -506,6 +507,7 @@ export const GetOrderResponse = zod.object({
   "total": zod.number(),
   "status": zod.enum(['new', 'confirmed', 'preparing', 'shipped', 'delivered', 'cancelled', 'failed_delivery']),
   "paymentMethod": zod.enum(['cod', 'bank_transfer']),
+  "paymentStatus": zod.enum(['unpaid', 'paid']),
   "items": zod.array(zod.object({
   "productId": zod.number(),
   "productName": zod.string(),
@@ -529,7 +531,8 @@ export const UpdateOrderStatusParams = zod.object({
 })
 
 export const UpdateOrderStatusBody = zod.object({
-  "status": zod.enum(['new', 'confirmed', 'preparing', 'shipped', 'delivered', 'cancelled', 'failed_delivery'])
+  "status": zod.enum(['new', 'confirmed', 'preparing', 'shipped', 'delivered', 'cancelled', 'failed_delivery']).optional(),
+  "paymentStatus": zod.enum(['unpaid', 'paid']).optional()
 })
 
 export const UpdateOrderStatusResponse = zod.object({
@@ -542,6 +545,7 @@ export const UpdateOrderStatusResponse = zod.object({
   "total": zod.number(),
   "status": zod.enum(['new', 'confirmed', 'preparing', 'shipped', 'delivered', 'cancelled', 'failed_delivery']),
   "paymentMethod": zod.enum(['cod', 'bank_transfer']),
+  "paymentStatus": zod.enum(['unpaid', 'paid']),
   "items": zod.array(zod.object({
   "productId": zod.number(),
   "productName": zod.string(),

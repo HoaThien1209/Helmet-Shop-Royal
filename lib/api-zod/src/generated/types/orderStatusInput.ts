@@ -5,8 +5,10 @@
  * Royal Helmet Quảng Trị storefront and admin API
  * OpenAPI spec version: 0.1.0
  */
+import type { OrderStatusInputPaymentStatus } from './orderStatusInputPaymentStatus';
 import type { OrderStatusInputStatus } from './orderStatusInputStatus';
 
 export interface OrderStatusInput {
-  status: OrderStatusInputStatus;
+  status?: OrderStatusInputStatus;
+  paymentStatus?: OrderStatusInputPaymentStatus;
 }

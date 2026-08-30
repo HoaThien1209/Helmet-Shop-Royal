@@ -688,13 +688,17 @@ router.patch("/admin/orders/:id", async (req, res): Promise<void> => {
   if (!requireAdmin(req, res)) return;
   const params = UpdateOrderStatusParams.safeParse(req.params);
   const parsed = UpdateOrderStatusBody.safeParse(req.body);
-  if (!params.success || !parsed.success) {
+  if (!params.success || !parsed.success || (!parsed.data.status && !parsed.data.paymentStatus)) {
     res.status(400).json({ error: "Trạng thái đơn hàng không hợp lệ" });
     return;
   }
   const [updated] = await db
     .update(ordersTable)
-    .set({ status: parsed.data.status, updatedAt: new Date() })
+    .set({
+      ...(parsed.data.status ? { status: parsed.data.status } : {}),
+      ...(parsed.data.paymentStatus ? { paymentStatus: parsed.data.paymentStatus } : {}),
+      updatedAt: new Date(),
+    })
     .where(eq(ordersTable.id, params.data.id))
     .returning();
   if (!updated) {

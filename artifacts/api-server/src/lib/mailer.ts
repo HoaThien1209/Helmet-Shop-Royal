@@ -13,6 +13,7 @@ const transporter =
     : null;
 
 const money = (value: number) => `${value.toLocaleString("vi-VN")}đ`;
+const orderCode = (id: number) => `RH${1000 + id}`;
 
 type OrderConfirmationItem = {
   productName: string;
@@ -70,6 +71,8 @@ export const sendOrderConfirmationEmail = async (order: OrderConfirmationEmail) 
 
 Cảm ơn bạn đã đặt hàng tại Royal Helmet Quảng Trị. Đơn hàng của bạn đã được ghi nhận, chúng tôi sẽ liên hệ xác nhận trong thời gian sớm nhất.
 
+Mã đơn hàng: ${orderCode(order.orderId)}
+
 ${itemsText}
 
 Tổng cộng: ${money(order.total)}
@@ -88,6 +91,7 @@ Cảm ơn bạn đã tin chọn Royal Helmet Quảng Trị.`;
       <h2 style="color:#b8860b;">Royal Helmet Quảng Trị</h2>
       <p>Xin chào <b>${order.customerName}</b>,</p>
       <p>Cảm ơn bạn đã đặt hàng tại Royal Helmet Quảng Trị. Đơn hàng của bạn đã được ghi nhận, chúng tôi sẽ liên hệ xác nhận trong thời gian sớm nhất.</p>
+      <p>Mã đơn hàng: <b>${orderCode(order.orderId)}</b></p>
       <table style="width:100%;border-collapse:collapse;margin:16px 0;">
         ${itemsHtml}
         <tr>

@@ -16,6 +16,7 @@ export const ordersTable = pgTable("rh_orders", {
   total: integer("total").notNull().default(0),
   status: text("status").notNull().default("new"),
   paymentMethod: text("payment_method").notNull().default("cod"),
+  paymentStatus: text("payment_status").notNull().default("unpaid"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

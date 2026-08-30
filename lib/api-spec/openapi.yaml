@@ -543,7 +543,7 @@ components:
         color: { type: ["string", "null"] }
     Order:
       type: object
-      required: [id, customerName, phone, email, address, total, status, paymentMethod, items, createdAt]
+      required: [id, customerName, phone, email, address, total, status, paymentMethod, paymentStatus, items, createdAt]
       properties:
         id: { type: number }
         customerName: { type: string }
@@ -558,6 +558,9 @@ components:
         paymentMethod:
           type: string
           enum: [cod, bank_transfer]
+        paymentStatus:
+          type: string
+          enum: [unpaid, paid]
         items:
           type: array
           items:
@@ -572,11 +575,13 @@ components:
         status: { type: string }
     OrderStatusInput:
       type: object
-      required: [status]
       properties:
         status:
           type: string
           enum: [new, confirmed, preparing, shipped, delivered, cancelled, failed_delivery]
+        paymentStatus:
+          type: string
+          enum: [unpaid, paid]
     LoginInput:
       type: object
       required: [username, password]

@@ -7,6 +7,7 @@
  */
 import type { OrderItem } from './orderItem';
 import type { OrderPaymentMethod } from './orderPaymentMethod';
+import type { OrderPaymentStatus } from './orderPaymentStatus';
 import type { OrderStatus } from './orderStatus';
 
 export interface Order {
@@ -19,6 +20,7 @@ export interface Order {
   total: number;
   status: OrderStatus;
   paymentMethod: OrderPaymentMethod;
+  paymentStatus: OrderPaymentStatus;
   items: OrderItem[];
   createdAt: Date;
 }

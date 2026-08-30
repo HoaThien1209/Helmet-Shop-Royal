@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/reac
 import {
   ArrowRight, BadgeCheck, Banknote, Check, ChevronDown, ChevronLeft, ChevronRight,
   CircleAlert, ClipboardList, CreditCard, Facebook, Filter, Flame, Heart, Instagram, KeyRound, LayoutDashboard,
-  Eye, Loader2, LogOut, MapPin, Menu, MessageCircle, Moon, Package, Pencil, Phone, Plus, Search, ShieldCheck, ShoppingBag,
+  Eye, Loader2, LogOut, Mail, MapPin, Menu, MessageCircle, Moon, Package, Pencil, Phone, Plus, Search, ShieldCheck, ShoppingBag,
   ShoppingCart, Star, Sun, Trash2, Truck, UserRound, Wrench, X, ZoomIn,
 } from "lucide-react";
 import {
@@ -24,6 +24,13 @@ const queryClient = new QueryClient();
 const money = (value: number) => new Intl.NumberFormat("vi-VN").format(value) + "đ";
 const date = (value: string) =>
   new Intl.DateTimeFormat("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(value));
+const orderCode = (id: number) => `RH${1000 + id}`;
+const BANK_NAME = "BIDV";
+const BANK_FULL_NAME = "Ngân hàng TMCP Đầu tư và Phát triển Việt Nam (BIDV)";
+const BANK_ACCOUNT_NUMBER = "8623554999";
+const BANK_ACCOUNT_NAME = "HO KINH DOANH DO PHUOT QT";
+const bankQrUrl = (orderId: number, amount: number) =>
+  `https://img.vietqr.io/image/${BANK_NAME}-${BANK_ACCOUNT_NUMBER}-compact2.png?amount=${amount}&addInfo=${encodeURIComponent(`Thanh toan don hang ${orderCode(orderId)}`)}&accountName=${encodeURIComponent(BANK_ACCOUNT_NAME)}`;
 const imageFallback = "https://images.unsplash.com/photo-1558981806-ec527fa84c39?auto=format&fit=crop&w=900&q=85";
 const categories = [
   { value: "fullface", label: "Mũ Fullface", images: ["/img/categories/fullface-1.webp", "/img/categories/fullface-2.webp", "/img/categories/fullface-3.webp"] },
@@ -39,6 +46,14 @@ function BrandMark({ className = "brand-mark" }: { className?: string }) {
     <path d="M10 26 V8 H18 A6 6 0 0 1 21.5 18.5 L26 26 H21 L17.5 19 H14 V26 Z M14 11.5 V15.5 H17.5 A2 2 0 0 0 17.5 11.5 Z" fill="#1C1400" />
     <path d="M10 12.5 A8 5 0 0 1 24 12.5" stroke="#1C1400" strokeWidth="1.6" fill="none" opacity=".55" />
   </svg>;
+}
+
+function ZaloIcon({ size = 24 }: { size?: number }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.49 10.272v-.45h1.347v6.322h-.77a.576.576 0 0 1-.577-.573v.001a3.27 3.27 0 0 1-1.938.632a3.284 3.284 0 0 1-3.284-3.282a3.284 3.284 0 0 1 3.284-3.282a3.27 3.27 0 0 1 1.937.632zM6.919 7.79v.205c0 .382-.051.694-.3 1.06l-.03.034a8 8 0 0 0-.242.285L2.024 14.8h4.895v.768a.576.576 0 0 1-.577.576H0v-.362c0-.443.11-.641.25-.847L4.858 9.23H.192V7.79zm8.551 8.354a.48.48 0 0 1-.48-.48V7.79h1.441v8.354zM20.693 9.6a3.306 3.306 0 1 1 .002 6.612a3.306 3.306 0 0 1-.002-6.612m-10.14 5.253a1.932 1.932 0 1 0 0-3.863a1.932 1.932 0 0 0 0 3.863m10.14-.003a1.945 1.945 0 1 0 0-3.89a1.945 1.945 0 0 0 0 3.89" /></svg>;
+}
+
+function MessengerIcon({ size = 24 }: { size?: number }) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0C5.24 0 0 4.952 0 11.64c0 3.499 1.434 6.521 3.769 8.61a.96.96 0 0 1 .323.683l.065 2.135a.96.96 0 0 0 1.347.85l2.381-1.053a.96.96 0 0 1 .641-.046A13 13 0 0 0 12 23.28c6.76 0 12-4.952 12-11.64S18.76 0 12 0m6.806 7.44c.522-.03.971.567.63 1.094l-4.178 6.457a.707.707 0 0 1-.977.208l-3.87-2.504a.44.44 0 0 0-.49.007l-4.363 3.01c-.637.438-1.415-.317-.995-.966l4.179-6.457a.706.706 0 0 1 .977-.21l3.87 2.505c.15.097.344.094.491-.007l4.362-3.008a.7.7 0 0 1 .364-.13" /></svg>;
 }
 
 function CategoryCard({ cat }: { cat: { value: string; label: string; images: string[] } }) {
@@ -73,6 +88,7 @@ function App() {
             <Route path="/cart" component={() => <Storefront><CartPage /></Storefront>} />
             <Route path="/checkout" component={() => <Storefront><CartPage checkout /></Storefront>} />
             <Route path="/order-success/:id" component={() => <Storefront><OrderSuccess /></Storefront>} />
+            <Route path="/order-payment/:id" component={() => <Storefront><OrderPayment /></Storefront>} />
             <Route path="/policies" component={() => <Storefront><Policies /></Storefront>} />
             <Route path="/gioi-thieu" component={() => <Storefront><AboutPage /></Storefront>} />
             <Route path="/admin/login" component={AdminLogin} />
@@ -94,7 +110,7 @@ const SHOP_PHONE = "0858925982";
 const SHOP_PHONE_DISPLAY = "0858 925 982";
 const SHOP_ADDRESS = "06 Lê Lợi - Đông Hà - Quảng Trị";
 const ZALO_LINK = `https://zalo.me/${SHOP_PHONE}`;
-const FACEBOOK_LINK = "https://m.me/dophuotdongha";
+const FACEBOOK_LINK = "https://m.me/100040569469679";
 const SPEC_FIELDS = ["Trọng lượng", "Đạt chuẩn", "Vỏ", "Loại xốp", "Mũ lót", "Ốp tai", "Kính"];
 const storeCategories = [
   { value: "", label: "Tất cả" },
@@ -178,13 +194,17 @@ function Storefront({ children }: { children: React.ReactNode }) {
       <main>{children}</main>
       <footer className="footer">
         <div className="container footer-grid">
-          <div><Link href="/" className="brand footer-brand"><BrandMark /><span><b>ROYAL</b><small>HELMET QUẢNG TRỊ</small></span></Link><p>Mũ bảo hiểm chính hãng Royal, chọn chuẩn size, giao tận nơi tại Quảng Trị và toàn quốc.</p><div className="socials"><a href={FACEBOOK_LINK} target="_blank" rel="noopener" aria-label="Nhắn tin Facebook"><Facebook size={17} /></a><a href={ZALO_LINK} target="_blank" rel="noopener" aria-label="Zalo"><MessageCircle size={17} /></a></div></div>
+          <div><Link href="/" className="brand footer-brand"><BrandMark /><span><b>ROYAL</b><small>HELMET QUẢNG TRỊ</small></span></Link><p>Mũ bảo hiểm chính hãng Royal, chọn chuẩn size, giao tận nơi tại Quảng Trị và toàn quốc.</p><div className="socials"><a href={FACEBOOK_LINK} target="_blank" rel="noopener" aria-label="Nhắn tin Facebook"><MessengerIcon size={17} /></a><a href={ZALO_LINK} target="_blank" rel="noopener" aria-label="Zalo"><ZaloIcon size={17} /></a></div></div>
           <div><h4>Mua hàng</h4><Link href="/products">Tất cả sản phẩm</Link><Link href="/products?sort=featured">Sản phẩm nổi bật</Link><Link href="/cart">Giỏ hàng</Link></div>
           <div><h4>Hỗ trợ</h4><Link href="/policies">Giao hàng & đổi size</Link><Link href="/policies#warranty">Bảo hành</Link><Link href="/policies#size">Hướng dẫn chọn size</Link></div>
           <div><h4>Liên hệ</h4><a href={`tel:${SHOP_PHONE}`}><Phone size={15} /> {SHOP_PHONE_DISPLAY}</a><p><MapPin size={15} /><span>{SHOP_ADDRESS}<br />Thứ 2 — Chủ nhật, 8:00 — 21:00</span></p></div>
         </div>
         <div className="container footer-bottom"><span>© 2026 Royal Helmet Quảng Trị</span><Link href="/admin/login">Quản trị viên</Link></div>
       </footer>
+      <div className="floating-contact">
+        <a href={ZALO_LINK} target="_blank" rel="noopener" className="floating-btn floating-zalo" aria-label="Chat Zalo" title="Chat Zalo"><ZaloIcon size={26} /></a>
+        <a href={FACEBOOK_LINK} target="_blank" rel="noopener" className="floating-btn floating-facebook" aria-label="Chat Facebook" title="Chat Facebook"><MessengerIcon size={26} /></a>
+      </div>
     </div>
   );
 }
@@ -368,13 +388,101 @@ function CartPage({ checkout = false }: { checkout?: boolean }) {
   const [form, setForm] = useState({ customerName: "", phone: "", email: "", address: "", note: "", paymentMethod: "cod" as "cod" | "bank_transfer" });
   const [submitted, setSubmitted] = useState(false);
   if (!cart.items.length && !submitted) return <div className="container page-state cart-empty"><ShoppingCart size={42} /><h1>Giỏ hàng đang trống</h1><p>Hãy chọn một chiếc mũ phù hợp cho hành trình tiếp theo.</p><Link className="button button-dark" href="/products">Mua sắm ngay <ArrowRight size={16} /></Link></div>;
-  const submit = (event: FormEvent) => { event.preventDefault(); const payload: OrderInput = { ...form, items: cart.items.map((item) => ({ productId: item.product.id, quantity: item.quantity, size: item.size || null, color: item.color || null })) }; orderMutation.mutate({ data: payload }, { onSuccess: (result) => { cart.clear(); setSubmitted(true); setLocation(`/order-success/${result.orderId}${form.email ? "?emailed=1" : ""}`); } }); };
+  const submit = (event: FormEvent) => {
+    event.preventDefault();
+    const payload: OrderInput = { ...form, items: cart.items.map((item) => ({ productId: item.product.id, quantity: item.quantity, size: item.size || null, color: item.color || null })) };
+    orderMutation.mutate({ data: payload }, {
+      onSuccess: (result) => {
+        if (form.paymentMethod === "bank_transfer") {
+          const snapshot = {
+            customerName: form.customerName,
+            phone: form.phone,
+            address: form.address,
+            createdAt: new Date().toISOString(),
+            items: cart.items.map((item) => ({ name: item.product.name, price: item.product.price, quantity: item.quantity, size: item.size || null, color: item.color || null })),
+          };
+          sessionStorage.setItem(`rh-order-${result.orderId}`, JSON.stringify(snapshot));
+        }
+        cart.clear();
+        setSubmitted(true);
+        const path = form.paymentMethod === "bank_transfer" ? `/order-payment/${result.orderId}` : `/order-success/${result.orderId}`;
+        setLocation(`${path}?total=${result.total}${form.email ? "&emailed=1" : ""}`);
+      },
+    });
+  };
   return <section className="container cart-page"><div className="breadcrumbs"><Link href="/">Trang chủ</Link><ChevronRight size={14} /><span>{checkout ? "Đặt hàng" : "Giỏ hàng"}</span></div>{!checkout && <div className="cart-title"><div><p className="eyebrow">YOUR RIDE STARTS HERE</p><h1>Giỏ hàng</h1></div><span>{cart.count} sản phẩm</span></div>}<div className="cart-layout"><div className="cart-lines">{cart.items.map((item, index) => <div className="cart-line" key={`${item.product.id}-${index}`}><img src={item.product.thumbnail || imageFallback} alt="" /><div className="cart-line-info"><Link href={`/p/${item.product.slug}`}>{item.product.name}</Link><small>{item.size && `Size ${item.size}`} {item.color && ` · ${item.color}`}</small><b>{money(item.product.price)}</b></div><div className="quantity"><button onClick={() => cart.update(index, item.quantity - 1)}>−</button><span>{item.quantity}</span><button onClick={() => cart.update(index, item.quantity + 1)}>+</button></div><button className="remove-button" aria-label="Xóa sản phẩm" onClick={() => cart.remove(index)}><Trash2 size={17} /></button></div>)}{!checkout && <Link href="/products" className="continue-link"><ChevronLeft size={16} /> Tiếp tục mua sắm</Link>}</div><aside className="cart-summary">{!checkout ? <><div className="summary-header"><h3>Tóm tắt đơn hàng</h3><span>{cart.count} món</span></div><div className="summary-row"><span>Tạm tính</span><b>{money(cart.total)}</b></div><div className="summary-row"><span>Phí vận chuyển</span><b>Liên hệ</b></div><div className="summary-total"><span>Tổng cộng</span><b>{money(cart.total)}</b></div><button className="button button-dark full" onClick={() => setLocation("/checkout")}>Tiến hành đặt hàng <ArrowRight size={16} /></button><p className="summary-note"><ShieldCheck size={14} /> Thanh toán an toàn khi nhận hàng</p></> : <form onSubmit={submit}><div className="summary-header"><h3>Thông tin nhận hàng</h3></div><label>Họ và tên<input required minLength={2} value={form.customerName} onChange={(e) => setForm({ ...form, customerName: e.target.value })} placeholder="Nguyễn Văn A" /></label><label>Số điện thoại<input required minLength={8} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="0900 000 000" /></label><label>Email <span className="optional">(không bắt buộc)</span><input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="ban@email.com" /><span className="optional">Nhập nếu muốn nhận email xác nhận đơn hàng</span></label><label>Địa chỉ nhận hàng<textarea required minLength={5} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Số nhà, đường, phường/xã, tỉnh..." /></label><label>Ghi chú đơn hàng <span className="optional">(không bắt buộc)</span><textarea value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} placeholder="Ví dụ: Gọi trước khi giao" /></label><div className="payment-options"><b>Phương thức thanh toán</b><label className={form.paymentMethod === "cod" ? "payment-option selected" : "payment-option"}><input type="radio" checked={form.paymentMethod === "cod"} onChange={() => setForm({ ...form, paymentMethod: "cod" })} /> <Banknote size={17} /><span><b>Thanh toán khi nhận hàng</b><small>Kiểm tra mũ trước khi thanh toán</small></span></label><label className={form.paymentMethod === "bank_transfer" ? "payment-option selected" : "payment-option"}><input type="radio" checked={form.paymentMethod === "bank_transfer"} onChange={() => setForm({ ...form, paymentMethod: "bank_transfer" })} /> <CreditCard size={17} /><span><b>Chuyển khoản ngân hàng</b><small>Thông tin chuyển khoản gửi sau khi đặt</small></span></label></div><div className="summary-total"><span>Tổng thanh toán</span><b>{money(cart.total)}</b></div><button className="button button-accent full" disabled={orderMutation.isPending}>{orderMutation.isPending ? <Loader2 className="spin" size={16} /> : <Check size={16} />} {orderMutation.isPending ? "Đang gửi đơn..." : "Xác nhận đặt hàng"}</button>{orderMutation.isError && <p className="form-error"><CircleAlert size={15} /> Không thể tạo đơn. Vui lòng kiểm tra tồn kho và thử lại.</p>}</form>}</aside></div></section>;
 }
 
 function OrderSuccess() {
+  const [, params] = useRoute("/order-success/:id");
   const emailed = new URLSearchParams(useSearch()).get("emailed") === "1";
-  return <div className="container page-state success-state"><div className="success-icon"><Check size={30} /></div><p className="eyebrow">ĐẶT HÀNG THÀNH CÔNG</p><h1>Cảm ơn bạn đã tin chọn Royal.</h1><p>Đơn hàng của bạn đã được ghi nhận. Chúng tôi sẽ gọi xác nhận trong thời gian sớm nhất.</p>{emailed && <p className="email-note"><MessageCircle size={15} /><span>Chúng tôi đã gửi email xác nhận đơn hàng. Nếu chưa thấy, vui lòng kiểm tra thêm mục <b>Spam/Thư rác</b> trong hộp thư.</span></p>}<div className="success-actions"><Link href="/products" className="button button-dark">Tiếp tục mua sắm</Link><a href={`tel:${SHOP_PHONE}`} className="text-link">Cần hỗ trợ? Gọi {SHOP_PHONE_DISPLAY}</a></div></div>;
+  const id = Number(params?.id);
+  return <div className="container page-state success-state"><div className="success-icon"><Check size={30} /></div><p className="eyebrow">ĐẶT HÀNG THÀNH CÔNG</p><h1>Cảm ơn bạn đã tin chọn Royal.</h1><p>Mã đơn hàng của bạn: <b>{orderCode(id)}</b>. Chúng tôi sẽ gọi xác nhận trong thời gian sớm nhất.</p>{emailed && <p className="email-note"><MessageCircle size={15} /><span>Chúng tôi đã gửi email xác nhận đơn hàng. Nếu chưa thấy, vui lòng kiểm tra thêm mục <b>Spam/Thư rác</b> trong hộp thư.</span></p>}<div className="success-actions"><Link href="/products" className="button button-dark">Tiếp tục mua sắm</Link><a href={`tel:${SHOP_PHONE}`} className="text-link">Cần hỗ trợ? Gọi {SHOP_PHONE_DISPLAY}</a></div></div>;
+}
+
+type BankTransferSnapshot = {
+  customerName: string;
+  phone: string;
+  address: string;
+  createdAt: string;
+  items: { name: string; price: number; quantity: number; size: string | null; color: string | null }[];
+};
+
+function OrderPayment() {
+  const [, params] = useRoute("/order-payment/:id");
+  const id = Number(params?.id);
+  const search = new URLSearchParams(useSearch());
+  const total = Number(search.get("total") || 0);
+  const emailed = search.get("emailed") === "1";
+  const [confirmed, setConfirmed] = useState(false);
+  const [snapshot] = useState<BankTransferSnapshot | null>(() => {
+    try {
+      const raw = sessionStorage.getItem(`rh-order-${id}`);
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  });
+  if (confirmed) {
+    return <div className="container page-state success-state"><div className="success-icon"><Check size={30} /></div><p className="eyebrow">ĐÃ GHI NHẬN CHUYỂN KHOẢN</p><h1>Cảm ơn bạn đã tin chọn Royal.</h1><p>Mã đơn hàng của bạn: <b>{orderCode(id)}</b>. Chúng tôi sẽ kiểm tra và xác nhận thanh toán trong thời gian sớm nhất.</p><div className="success-actions"><Link href="/products" className="button button-dark">Tiếp tục mua sắm</Link><a href={`tel:${SHOP_PHONE}`} className="text-link">Cần hỗ trợ? Gọi {SHOP_PHONE_DISPLAY}</a></div></div>;
+  }
+  return <section className="container payment-page">
+    <div className="breadcrumbs"><Link href="/">Trang chủ</Link><ChevronRight size={14} /><span>Thanh toán đơn hàng</span></div>
+    <div className="payment-layout">
+      <div className="payment-details">
+        <h1>Thông tin chuyển khoản ngân hàng</h1>
+        <div className="payment-bank-card">
+          <b>{BANK_ACCOUNT_NAME}</b>
+          <p><span>Ngân hàng</span><b>{BANK_FULL_NAME}</b></p>
+          <p><span>Số tài khoản</span><b>{BANK_ACCOUNT_NUMBER}</b></p>
+          <p><span>Nội dung chuyển khoản</span><b>Thanh toan don hang {orderCode(id)}</b></p>
+        </div>
+        {snapshot && <>
+          <h2>Chi tiết đơn hàng</h2>
+          <div className="order-detail-lines">
+            {snapshot.items.map((item, i) => <div key={i}><span>{item.name} <small>× {item.quantity} {item.size && `· ${item.size}`} {item.color && `· ${item.color}`}</small></span><b>{money(item.price * item.quantity)}</b></div>)}
+          </div>
+          <h2>Địa chỉ giao hàng</h2>
+          <p className="payment-address">{snapshot.customerName}<br />{snapshot.phone}<br />{snapshot.address}</p>
+        </>}
+      </div>
+      <aside className="payment-summary">
+        <div className="payment-summary-box">
+          <p className="email-note-ok"><Check size={15} /> Đơn hàng của bạn đã được ghi nhận.</p>
+          <div className="summary-row"><span>Mã đơn hàng</span><b>{orderCode(id)}</b></div>
+          {snapshot && <div className="summary-row"><span>Ngày đặt</span><b>{date(snapshot.createdAt)}</b></div>}
+          <div className="summary-total"><span>Tổng cộng</span><b>{money(total)}</b></div>
+          {emailed && <p className="email-note"><MessageCircle size={15} /><span>Đã gửi email xác nhận đơn hàng.</span></p>}
+        </div>
+        <div className="payment-qr-box">
+          <p>Vui lòng quét mã để thanh toán</p>
+          <img src={bankQrUrl(id, total)} alt={`Mã QR chuyển khoản đơn hàng ${orderCode(id)}`} />
+        </div>
+        <button type="button" className="button button-dark full" onClick={() => setConfirmed(true)}>Tôi đã chuyển khoản xong</button>
+        <Link href="/products" className="button button-ghost full">Tiếp tục mua sắm</Link>
+      </aside>
+    </div>
+  </section>;
 }
 
 function Policies() {
@@ -518,9 +626,22 @@ function AdminShell({ children }: { children: React.ReactNode }) {
 }
 
 function Dashboard() {
+  const query = useQueryClient();
   const stats = useGetAdminStats();
   const orders = useListOrders(undefined, { query: { staleTime: 20_000 } as any });
-  return <div className="admin-page"><AdminPageHeader eyebrow="TỔNG QUAN" title="Chào buổi sáng." description="Đây là tình hình cửa hàng của bạn hôm nay." /><div className="stat-grid">{[{ label: "Tổng sản phẩm", value: stats.data?.productCount ?? "—", icon: Package }, { label: "Tổng đơn hàng", value: stats.data?.orderCount ?? "—", icon: ClipboardList }, { label: "Đơn mới cần xử lý", value: stats.data?.newOrderCount ?? "—", icon: CircleAlert }, { label: "Doanh thu", value: stats.data ? money(stats.data.revenue) : "—", icon: Banknote }].map(({ label, value, icon: Icon }) => <div className="stat-card" key={label}><div className="stat-icon"><Icon size={18} /></div><small>{label}</small><strong>{value}</strong></div>)}</div><div className="admin-panel"><div className="panel-heading"><div><p className="eyebrow">MỚI NHẤT</p><h2>Đơn hàng gần đây</h2></div><Link href="/admin/orders" className="text-link">Xem tất cả <ArrowRight size={15} /></Link></div>{orders.isLoading ? <ProductSkeleton /> : orders.data?.length ? <OrderTable orders={orders.data.slice(0, 6)} /> : <EmptyState text="Chưa có đơn hàng nào." />}</div></div>;
+  const remove = useDeleteOrder();
+  const [selected, setSelected] = useState<Order | null>(null);
+  const deleteOrder = (order: Order) => {
+    if (!window.confirm(`Xóa đơn hàng ${orderCode(order.id)} của ${order.customerName}? Không thể hoàn tác.`)) return;
+    remove.mutate({ id: order.id }, {
+      onSuccess: () => {
+        if (selected?.id === order.id) setSelected(null);
+        query.invalidateQueries({ queryKey: getListOrdersQueryKey() });
+        query.invalidateQueries({ queryKey: getGetAdminStatsQueryKey() });
+      },
+    });
+  };
+  return <div className="admin-page"><AdminPageHeader eyebrow="TỔNG QUAN" title="Chào buổi sáng." description="Đây là tình hình cửa hàng của bạn hôm nay." /><div className="stat-grid">{[{ label: "Tổng sản phẩm", value: stats.data?.productCount ?? "—", icon: Package }, { label: "Tổng đơn hàng", value: stats.data?.orderCount ?? "—", icon: ClipboardList }, { label: "Đơn mới cần xử lý", value: stats.data?.newOrderCount ?? "—", icon: CircleAlert }, { label: "Doanh thu", value: stats.data ? money(stats.data.revenue) : "—", icon: Banknote }].map(({ label, value, icon: Icon }) => <div className="stat-card" key={label}><div className="stat-icon"><Icon size={18} /></div><small>{label}</small><strong>{value}</strong></div>)}</div><div className="admin-panel"><div className="panel-heading"><div><p className="eyebrow">MỚI NHẤT</p><h2>Đơn hàng gần đây</h2></div><Link href="/admin/orders" className="text-link">Xem tất cả <ArrowRight size={15} /></Link></div>{orders.isLoading ? <ProductSkeleton /> : orders.data?.length ? <OrderTable orders={orders.data.slice(0, 6)} onSelect={setSelected} onDelete={deleteOrder} /> : <EmptyState text="Chưa có đơn hàng nào." />}</div>{selected && <OrderDetailModal order={selected} onClose={() => setSelected(null)} onChange={setSelected} onDelete={deleteOrder} />}</div>;
 }
 function AdminPageHeader({ eyebrow, title, description, action }: { eyebrow: string; title: string; description?: string; action?: React.ReactNode }) { return <div className="admin-page-header"><div><p className="eyebrow">{eyebrow}</p><h1>{title}</h1>{description && <p>{description}</p>}</div>{action}</div>; }
 function ProductAdmin() {
@@ -622,7 +743,6 @@ function ProductForm({ product, setProduct, onSubmit, onClose, saving, editing }
 function OrderAdmin() {
   const query = useQueryClient();
   const orders = useListOrders(undefined, { query: { staleTime: 15_000 } as any });
-  const update = useUpdateOrderStatus();
   const remove = useDeleteOrder();
   const [selected, setSelected] = useState<Order | null>(null);
   const [statusFilter, setStatusFilter] = useState("");
@@ -651,9 +771,16 @@ function OrderAdmin() {
       },
     });
   };
-  return <div className="admin-page"><AdminPageHeader eyebrow="FULFILLMENT" title="Đơn hàng" description="Theo dõi và cập nhật trạng thái đơn hàng." /><div className="admin-panel"><div className="order-filter"><span>{filtered.length} / {orders.data?.length ?? 0} đơn hàng</span><div className="order-filter-controls"><label className="order-date-field">Từ ngày<input type="date" value={dateFrom} max={dateTo || undefined} onChange={(e) => setDateFrom(e.target.value)} /></label><label className="order-date-field">Đến ngày<input type="date" value={dateTo} min={dateFrom || undefined} onChange={(e) => setDateTo(e.target.value)} /></label><select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}><option value="">Tất cả trạng thái</option>{statuses.map((s) => <option value={s} key={s}>{statusLabel(s)}</option>)}</select><select value={sortBy} onChange={(e) => setSortBy(e.target.value)}><option value="newest">Mới nhất</option><option value="oldest">Cũ nhất</option><option value="total-desc">Tổng tiền cao đến thấp</option><option value="total-asc">Tổng tiền thấp đến cao</option></select></div></div>{orders.isLoading ? <ProductSkeleton /> : filtered.length ? <><OrderTable orders={pager.pageItems} onSelect={setSelected} onDelete={deleteOrder} /><Pagination page={pager.page} pageCount={pager.pageCount} onChange={pager.setPage} /></> : <EmptyState text="Không có đơn hàng phù hợp." />}</div>{selected && <div className="modal-backdrop"><div className="modal order-detail"><div className="modal-heading"><div><p className="eyebrow">ĐƠN HÀNG #{selected.id}</p><h2>{selected.customerName}</h2></div><button onClick={() => setSelected(null)}><X size={20} /></button></div><div className="order-meta"><span><Phone size={15} /> {selected.phone}</span><span><Truck size={15} /> {selected.address}</span><span><CreditCard size={15} /> {selected.paymentMethod === "cod" ? "Thanh toán COD" : "Chuyển khoản"}</span></div><div className="order-detail-lines">{selected.items.map((item) => <div key={`${item.productId}-${item.size}-${item.color}`}><span>{item.productName} <small>× {item.quantity} {item.size && `· ${item.size}`} {item.color && `· ${item.color}`}</small></span><b>{money(item.price * item.quantity)}</b></div>)}</div><div className="summary-total"><span>Tổng đơn</span><b>{money(selected.total)}</b></div><label>Trạng thái<select value={selected.status} onChange={(e) => update.mutate({ id: selected.id, data: { status: e.target.value as any } }, { onSuccess: (order) => { setSelected(order); query.invalidateQueries({ queryKey: getListOrdersQueryKey() }); query.invalidateQueries({ queryKey: getGetAdminStatsQueryKey() }); } })}>{statuses.map((status) => <option value={status} key={status}>{statusLabel(status)}</option>)}</select></label><div className="modal-actions"><button type="button" className="button button-ghost" onClick={() => deleteOrder(selected)}><Trash2 size={16} /> Xóa đơn hàng</button></div></div></div>}</div>;
+  return <div className="admin-page"><AdminPageHeader eyebrow="FULFILLMENT" title="Đơn hàng" description="Theo dõi và cập nhật trạng thái đơn hàng." /><div className="admin-panel"><div className="order-filter"><span>{filtered.length} / {orders.data?.length ?? 0} đơn hàng</span><div className="order-filter-controls"><label className="order-date-field">Từ ngày<input type="date" value={dateFrom} max={dateTo || undefined} onChange={(e) => setDateFrom(e.target.value)} /></label><label className="order-date-field">Đến ngày<input type="date" value={dateTo} min={dateFrom || undefined} onChange={(e) => setDateTo(e.target.value)} /></label><select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}><option value="">Tất cả trạng thái</option>{statuses.map((s) => <option value={s} key={s}>{statusLabel(s)}</option>)}</select><select value={sortBy} onChange={(e) => setSortBy(e.target.value)}><option value="newest">Mới nhất</option><option value="oldest">Cũ nhất</option><option value="total-desc">Tổng tiền cao đến thấp</option><option value="total-asc">Tổng tiền thấp đến cao</option></select></div></div>{orders.isLoading ? <ProductSkeleton /> : filtered.length ? <><OrderTable orders={pager.pageItems} onSelect={setSelected} onDelete={deleteOrder} /><Pagination page={pager.page} pageCount={pager.pageCount} onChange={pager.setPage} /></> : <EmptyState text="Không có đơn hàng phù hợp." />}</div>{selected && <OrderDetailModal order={selected} onClose={() => setSelected(null)} onChange={setSelected} onDelete={deleteOrder} />}</div>;
 }
-function OrderTable({ orders, onSelect, onDelete }: { orders: Order[]; onSelect?: (order: Order) => void; onDelete?: (order: Order) => void }) { return <div className="order-table"><div className="order-table-head"><span>Đơn hàng</span><span>Khách hàng</span><span>Ngày đặt</span><span>Tổng tiền</span><span>Trạng thái</span><span></span></div>{orders.map((order) => <div className="order-row" key={order.id} onClick={() => onSelect?.(order)}><span><b>#{order.id}</b><small>{order.items.length} sản phẩm</small></span><span>{order.customerName}<small>{order.phone}</small></span><span>{date(order.createdAt)}</span><strong>{money(order.total)}</strong><span className={`status status-${order.status}`}>{statusLabel(order.status)}</span><button type="button" className="order-row-delete" onClick={(e) => { e.stopPropagation(); onDelete?.(order); }} aria-label="Xóa đơn hàng"><Trash2 size={15} /></button></div>)}</div>; }
+function OrderDetailModal({ order, onClose, onChange, onDelete }: { order: Order; onClose: () => void; onChange: (order: Order) => void; onDelete: (order: Order) => void }) {
+  const query = useQueryClient();
+  const update = useUpdateOrderStatus();
+  const statuses = ["new", "confirmed", "preparing", "shipped", "delivered", "cancelled", "failed_delivery"] as const;
+  const refresh = (updated: Order) => { onChange(updated); query.invalidateQueries({ queryKey: getListOrdersQueryKey() }); query.invalidateQueries({ queryKey: getGetAdminStatsQueryKey() }); };
+  return <div className="modal-backdrop"><div className="modal order-detail"><div className="modal-heading"><div><p className="eyebrow">ĐƠN HÀNG {orderCode(order.id)}</p><h2>{order.customerName}</h2></div><button onClick={onClose}><X size={20} /></button></div><div className="order-meta"><span><Phone size={15} /> {order.phone}</span>{order.email && <span><Mail size={15} /> {order.email}</span>}<span><Truck size={15} /> {order.address}</span><span><CreditCard size={15} /> {order.paymentMethod === "cod" ? "Thanh toán COD" : "Chuyển khoản"}</span></div>{order.paymentMethod === "bank_transfer" && <button type="button" className={`payment-status-toggle ${order.paymentStatus === "paid" ? "paid" : "unpaid"}`} onClick={() => update.mutate({ id: order.id, data: { paymentStatus: order.paymentStatus === "paid" ? "unpaid" : "paid" } }, { onSuccess: refresh })}>{order.paymentStatus === "paid" ? <><Check size={14} /> Đã thanh toán chuyển khoản</> : <><CircleAlert size={14} /> Chưa thanh toán — bấm để đánh dấu đã nhận tiền</>}</button>}<div className="order-detail-lines">{order.items.map((item) => <div key={`${item.productId}-${item.size}-${item.color}`}><span>{item.productName} <small>× {item.quantity} {item.size && `· ${item.size}`} {item.color && `· ${item.color}`}</small></span><b>{money(item.price * item.quantity)}</b></div>)}</div><div className="summary-total"><span>Tổng đơn</span><b>{money(order.total)}</b></div><label>Trạng thái<select value={order.status} onChange={(e) => update.mutate({ id: order.id, data: { status: e.target.value as any } }, { onSuccess: refresh })}>{statuses.map((status) => <option value={status} key={status}>{statusLabel(status)}</option>)}</select></label><div className="modal-actions"><button type="button" className="button button-ghost" onClick={() => onDelete(order)}><Trash2 size={16} /> Xóa đơn hàng</button></div></div></div>;
+}
+function OrderTable({ orders, onSelect, onDelete }: { orders: Order[]; onSelect?: (order: Order) => void; onDelete?: (order: Order) => void }) { return <div className="order-table"><div className="order-table-head"><span>Đơn hàng</span><span>Khách hàng</span><span>Ngày đặt</span><span>Tổng tiền</span><span>Trạng thái</span><span></span></div>{orders.map((order) => <div className="order-row" key={order.id} onClick={() => onSelect?.(order)}><span><b>{orderCode(order.id)}</b><small>{order.items.length} sản phẩm</small></span><span>{order.customerName}<small>{order.phone}</small>{order.email && <small>{order.email}</small>}</span><span>{date(order.createdAt)}</span><strong>{money(order.total)}</strong><span className="status-cell"><span className={`status status-${order.status}`}>{statusLabel(order.status)}</span>{order.paymentMethod === "bank_transfer" && <span className={`pay-badge ${order.paymentStatus === "paid" ? "pay-paid" : "pay-unpaid"}`}>{order.paymentStatus === "paid" ? "Đã TT" : "Chưa TT"}</span>}</span><button type="button" className="order-row-delete" onClick={(e) => { e.stopPropagation(); onDelete?.(order); }} aria-label="Xóa đơn hàng"><Trash2 size={15} /></button></div>)}</div>; }
 function statusLabel(status: string) { return ({ new: "Đơn mới", confirmed: "Đã xác nhận", preparing: "Đang chuẩn bị", shipped: "Đang giao", delivered: "Đã giao", cancelled: "Đã hủy", failed_delivery: "Giao thất bại" } as Record<string, string>)[status] || status; }
 
 export default App;

@@ -151,6 +151,14 @@ export const OrderPaymentMethod = {
   bank_transfer: 'bank_transfer',
 } as const;
 
+export type OrderPaymentStatus = typeof OrderPaymentStatus[keyof typeof OrderPaymentStatus];
+
+
+export const OrderPaymentStatus = {
+  unpaid: 'unpaid',
+  paid: 'paid',
+} as const;
+
 export interface Order {
   id: number;
   customerName: string;
@@ -161,6 +169,7 @@ export interface Order {
   total: number;
   status: OrderStatus;
   paymentMethod: OrderPaymentMethod;
+  paymentStatus: OrderPaymentStatus;
   items: OrderItem[];
   createdAt: string;
 }
@@ -184,8 +193,17 @@ export const OrderStatusInputStatus = {
   failed_delivery: 'failed_delivery',
 } as const;
 
+export type OrderStatusInputPaymentStatus = typeof OrderStatusInputPaymentStatus[keyof typeof OrderStatusInputPaymentStatus];
+
+
+export const OrderStatusInputPaymentStatus = {
+  unpaid: 'unpaid',
+  paid: 'paid',
+} as const;
+
 export interface OrderStatusInput {
-  status: OrderStatusInputStatus;
+  status?: OrderStatusInputStatus;
+  paymentStatus?: OrderStatusInputPaymentStatus;
 }
 
 export interface LoginInput {
