@@ -326,6 +326,47 @@ router.get("/products/:slug", async (req, res): Promise<void> => {
   res.json(GetProductResponse.parse(mapProduct(product)));
 });
 
+const SITE_URL = process.env.SITE_URL ?? "https://royalhelmetquangtri.io.vn";
+
+const xmlEscape = (value: string) =>
+  value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;");
+
+const absoluteUrl = (url: string) => (url.startsWith("http") ? url : `${SITE_URL}${url}`);
+
+router.get("/feed.xml", async (_req, res): Promise<void> => {
+  await ensureSeedProducts();
+  const rows = await db.select().from(productsTable).orderBy(desc(productsTable.createdAt));
+  const items = rows
+    .map(mapProduct)
+    .filter((p) => p.thumbnail)
+    .map((p) => {
+      const description = xmlEscape((p.description || p.name).replace(/\s+/g, " ").trim().slice(0, 5000));
+      return `  <item>
+    <g:id>${p.id}</g:id>
+    <title>${xmlEscape(p.name)}</title>
+    <description>${description}</description>
+    <link>${SITE_URL}/p/${p.slug}</link>
+    <g:image_link>${absoluteUrl(p.thumbnail)}</g:image_link>
+    <g:availability>${p.stock > 0 ? "in_stock" : "out_of_stock"}</g:availability>
+    <g:price>${Math.round(p.price)} VND</g:price>
+    <g:condition>new</g:condition>
+    <g:brand>Royal</g:brand>
+    <g:google_product_category>Apparel &amp; Accessories &gt; Clothing Accessories &gt; Helmets</g:google_product_category>
+  </item>`;
+    })
+    .join("\n");
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">
+<channel>
+  <title>Royal Helmet Quảng Trị</title>
+  <link>${SITE_URL}</link>
+  <description>Mũ bảo hiểm Royal chính hãng tại Đông Hà, Quảng Trị</description>
+${items}
+</channel>
+</rss>`;
+  res.type("application/xml").send(xml);
+});
+
 router.post("/orders", async (req, res): Promise<void> => {
   const parsed = CreateOrderBody.safeParse(req.body);
   if (!parsed.success) {

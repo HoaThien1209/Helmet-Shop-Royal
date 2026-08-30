@@ -40,6 +40,21 @@ const categories = [
   { value: "phu-kien", label: "Phụ kiện", images: ["/img/categories/accessories-1.jpg", "/img/categories/accessories-2.jpg", "/img/categories/accessories-3.jpg"] },
 ];
 
+function useDocumentMeta(title: string, description?: string) {
+  useEffect(() => {
+    document.title = title;
+    if (description) {
+      let tag = document.querySelector('meta[name="description"]');
+      if (!tag) {
+        tag = document.createElement("meta");
+        tag.setAttribute("name", "description");
+        document.head.appendChild(tag);
+      }
+      tag.setAttribute("content", description);
+    }
+  }, [title, description]);
+}
+
 function BrandMark({ className = "brand-mark" }: { className?: string }) {
   return <svg viewBox="0 0 34 34" className={className} aria-hidden="true">
     <rect width="34" height="34" fill="#FBBF24" />
@@ -210,6 +225,10 @@ function Storefront({ children }: { children: React.ReactNode }) {
 }
 
 function Home() {
+  useDocumentMeta(
+    "Royal Helmet Quảng Trị — Mũ bảo hiểm Royal chính hãng",
+    "Royal Helmet Quảng Trị — chuyên mũ bảo hiểm Royal chính hãng tại Đông Hà, Quảng Trị. Đầy đủ mẫu Fullface, 3/4, 1/2, mũ trẻ em và phụ kiện. Giao hàng toàn quốc, đổi size 7 ngày, bảo hành 12 tháng.",
+  );
   const products = useQueryProducts({ limit: 100 });
   const featured = products.data?.filter((p) => p.featured).slice(0, 8) ?? [];
   const newItems = products.data?.filter((p) => p.isNew).slice(0, 8) ?? [];
@@ -274,6 +293,15 @@ function Catalog() {
     const qs = next.toString();
     setLocation(qs ? `/products?${qs}` : "/products");
   };
+  const categoryLabel = categories.find((c) => c.value === category)?.label;
+  useDocumentMeta(
+    categoryLabel
+      ? `${categoryLabel} Royal chính hãng, giá rẻ tại Đông Hà, Quảng Trị | Royal Helmet Quảng Trị`
+      : "Mũ bảo hiểm Royal chính hãng, giá rẻ tại Đông Hà, Quảng Trị | Royal Helmet Quảng Trị",
+    categoryLabel
+      ? `${categoryLabel} Royal chính hãng, giá tốt tại Royal Helmet Quảng Trị (Đông Hà, Quảng Trị). Đầy đủ mẫu mã, màu sắc, giao hàng toàn quốc, bảo hành 12 tháng.`
+      : "Mũ bảo hiểm Royal chính hãng đủ mẫu Fullface, 3/4, 1/2, mũ trẻ em, giá tốt tại Đông Hà, Quảng Trị. Giao hàng toàn quốc, đổi size 7 ngày, bảo hành 12 tháng.",
+  );
   const result = useListProducts({ q: search || undefined, category: category || undefined, sort: sort as any, limit: 100 });
   const CATALOG_PAGE_SIZE = 16, CATALOG_LOAD_MORE = 12;
   const [visibleCount, setVisibleCount] = useState(CATALOG_PAGE_SIZE);
@@ -307,6 +335,10 @@ function galleryImages(product: Product, color: string) {
 function ProductDetail() {
   const [, params] = useRoute("/p/:slug");
   const { data: product, isLoading, isError } = useGetProduct(params?.slug || "");
+  useDocumentMeta(
+    product ? `${product.name} chính hãng, giá ${money(product.price)} tại Đông Hà, Quảng Trị | Royal Helmet Quảng Trị` : "Royal Helmet Quảng Trị — Mũ bảo hiểm Royal chính hãng",
+    product ? `${product.name} chính hãng, giá ${money(product.price)}, giao hàng toàn quốc, bảo hành 12 tháng tại Royal Helmet Quảng Trị (Đông Hà, Quảng Trị).` : undefined,
+  );
   const cart = useCart();
   const [, setLocation] = useLocation();
   const [imageIndex, setImageIndex] = useState(0);
@@ -486,11 +518,19 @@ function OrderPayment() {
 }
 
 function Policies() {
+  useDocumentMeta(
+    "Chính sách giao hàng, đổi size, bảo hành — Royal Helmet Quảng Trị (Đông Hà)",
+    "Chính sách giao hàng toàn quốc, đổi size trong 7 ngày, bảo hành chính hãng 12 tháng cho mũ bảo hiểm Royal tại Royal Helmet Quảng Trị, Đông Hà, Quảng Trị.",
+  );
   return <section className="container policy-page"><div className="breadcrumbs"><Link href="/">Trang chủ</Link><ChevronRight size={14} /><span>Chính sách</span></div><div className="policy-hero"><p className="eyebrow">ROYAL CARE</p><h1>Mua mũ dễ dàng.<br /><em>Yên tâm dài lâu.</em></h1><p>Những điều bạn cần biết trước và sau khi sở hữu chiếc mũ Royal.</p></div><div className="policy-grid"><Policy icon={<Truck />} title="Giao hàng" id="shipping"><p>Đơn hàng được đóng gói cẩn thận và giao toàn quốc. Thời gian dự kiến 2–5 ngày làm việc tùy khu vực. Hỗ trợ kiểm tra hàng trước khi thanh toán với đơn COD.</p></Policy><Policy icon={<BadgeCheck />} title="Đổi size trong 7 ngày" id="size"><p>Nếu mũ không vừa, bạn có thể liên hệ trong vòng 7 ngày từ khi nhận hàng để được hỗ trợ đổi size. Mũ cần còn nguyên tem, chưa qua sử dụng và không có dấu hiệu trầy xước.</p><p className="policy-tip">Mẹo chọn size: dùng thước dây đo vòng đầu tại vị trí rộng nhất, ngang trên lông mày. Gửi số đo cho chúng tôi để được tư vấn.</p></Policy><Policy icon={<ShieldCheck />} title="Bảo hành chính hãng" id="warranty"><p>Sản phẩm Royal được bảo hành theo chính sách chính hãng, hỗ trợ các lỗi kỹ thuật từ nhà sản xuất. Không áp dụng cho hư hỏng do va chạm, tác động ngoại lực hoặc sử dụng sai hướng dẫn.</p></Policy><Policy icon={<CreditCard />} title="Thanh toán"><p>Thanh toán khi nhận hàng (COD) hoặc chuyển khoản ngân hàng. Chúng tôi không yêu cầu bạn cung cấp mã OTP hay thông tin thẻ qua tin nhắn.</p></Policy></div></section>;
 }
 function Policy({ icon, title, id, children }: { icon: React.ReactNode; title: string; id?: string; children: React.ReactNode }) { return <article className="policy-card" id={id}><div className="policy-icon">{icon}</div><h2>{title}</h2>{children}</article>; }
 
 function AboutPage() {
+  useDocumentMeta(
+    "Giới thiệu Royal Helmet Quảng Trị — Cửa hàng mũ bảo hiểm Royal chính hãng tại Đông Hà",
+    "Royal Helmet Quảng Trị là địa chỉ chuyên mũ bảo hiểm Royal chính hãng tại Đông Hà, Quảng Trị, giá tốt, giao hàng toàn quốc, bảo hành 12 tháng.",
+  );
   return <section className="container about-page">
     <div className="breadcrumbs"><Link href="/">Trang chủ</Link><ChevronRight size={14} /><span>Giới thiệu</span></div>
     <div className="policy-hero">
